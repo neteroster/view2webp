@@ -6,6 +6,8 @@ import json
 import zipfile
 import re
 import requests
+import shutil
+from distutils.dir_util import copy_tree
 
 workDir=os.getcwd()
 
@@ -97,6 +99,8 @@ def main():
         name = detail['title']
         epDict = getEpDict(detail['ep_list'])
 
+        print("[INFO] Now processing: " + name)
+
         epDirs = [entry.path for entry in os.scandir(
             comic) if entry.is_dir() and re.match(r'\d+$', entry.name) != None]
         for ep in epDirs:
@@ -134,11 +138,15 @@ def main():
                 os.rename(ep, newPath)
             except OSError as e:
                 os.rename(ep, newPath+os.path.basename(ep))
-            print(f"{epName} has done")
+            print(f"[INFO] {epName} has done.")
 
-        newPath = os.path.join(workDir, name)
-        os.rename(comic, newPath)
-        print(f"{name} completed\n")
+        tgtPath = os.path.join(workDir, name)
+        if os.path.isdir(tgtPath):
+            print(f"[INFO] Folder {name} exists, updating...")
+            copy_tree(comic, tgtPath)
+            shutil.rmtree(comic)
+        else: os.rename(comic, tgtPath)
+        print(f"[INFO] {name} completed.\n")
 
 
 if __name__ == '__main__':
